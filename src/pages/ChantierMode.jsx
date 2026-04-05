@@ -1,14 +1,17 @@
 import React, { useState } from 'react'
 import { Calculator, Plus, Trash2, Download, CheckCircle2, AlertCircle } from 'lucide-react'
+import jsPDF from 'jspdf'
+import autoTable from 'jspdf-autotable'
 
 const ChantierMode = () => {
   const [metrics, setMetrics] = useState([
-    { id: 1, article: '1.03 - hgfg', libelle: 'revêtement de surface', formule: '10*5', resultat: 50.5, unite: 'M2', qteMarche: 1.0 },
+    { id: 1, article: '1.01', libelle: 'Terrassement en masse', formule: '15*12*1.5', resultat: 270, unite: 'M3', qteMarche: 300 },
+    { id: 2, article: '2.04', libelle: 'Béton armé pour semelles', formule: '(4*1.2*1.2*0.6)*8', resultat: 6.912, unite: 'M3', qteMarche: 10.0 },
   ])
 
   const calculate = (formule) => {
     try {
-      // Basic math parser (safeeval would be better in prod)
+      // Basic math parser
       return eval(formule.replace(/[^-()\d/*+.]/g, '')) || 0
     } catch {
       return 0
@@ -25,11 +28,58 @@ const ChantierMode = () => {
     }))
   }
 
+  const generatePDF = () => {
+    const doc = new jsPDF()
+    const date = new Date().toLocaleDateString('fr-DZ')
+    
+    // Header
+    doc.setFontSize(10)
+    doc.text("RÉPUBLIQUE ALGÉRIENNE DÉMOCRATIQUE ET POPULAIRE", 105, 15, { align: 'center' })
+    doc.setFontSize(14)
+    doc.setFont("helvetica", "bold")
+    doc.text("ATLAS MANAGER - FEUILLE D'ATTACHEMENT", 105, 25, { align: 'center' })
+    
+    doc.setFontSize(11)
+    doc.setFont("helvetica", "normal")
+    doc.text(`Projet: Construction d'un Groupe Scolaire`, 14, 40)
+    doc.text(`Entreprise: ATLAS CONSTRUCTION DZ`, 14, 46)
+    doc.text(`Date: ${date}`, 14, 52)
+    doc.text(`Attachement N°: 01`, 160, 52)
+
+    // Table
+    const tableData = metrics.map(m => [
+      m.article,
+      m.libelle,
+      m.unite,
+      m.formule,
+      m.resultat.toFixed(3)
+    ])
+
+    autoTable(doc, {
+      startY: 60,
+      head: [['Article', 'Désignation des Travaux', 'Unité', 'Détail des calculs (Formule)', 'Quantité']],
+      body: tableData,
+      theme: 'grid',
+      headStyles: { fillStyle: '#1e293b', textColor: [255, 255, 255] },
+      columnStyles: {
+        4: { halign: 'right', fontStyle: 'bold' }
+      }
+    })
+
+    // Footer
+    const finalY = doc.lastAutoTable.finalY + 20
+    doc.text("L'Entreprise", 30, finalY)
+    doc.text("Le Maître d'Œuvre", 90, finalY)
+    doc.text("Le Maître d'Ouvrage", 150, finalY)
+
+    doc.save(`Attachement_01_${date.replace(/\//g, '-')}.pdf`)
+  }
+
   const addMetric = () => {
     setMetrics([...metrics, { 
       id: Date.now(), 
       article: '', 
-      libelle: 'Description du métré...', 
+      libelle: 'Nouvel article...', 
       formule: '', 
       resultat: 0, 
       unite: 'U', 
@@ -43,16 +93,16 @@ const ChantierMode = () => {
     <div className="chantier-mode">
       <div className="attachment-header">
         <div className="breadcrumb">
-          <span>Chantiers</span> / <span>Situations de travaux</span> / <span>Feuille d'attachement</span>
+          <span>Chantiers</span> / <span>Situations</span> / <span>Métrés</span>
         </div>
         <div className="header-main">
           <div className="title-section">
-            <h1>Attachement N° 1</h1>
-            <span className="status-badge">Modifiable</span>
+            <h1>Attachement N° 01</h1>
+            <span className="status-badge">Brouillon</span>
           </div>
           <div className="header-actions">
-            <button className="btn-outline"><Download size={18} /> Exporter PDF</button>
-            <button className="btn-primary"><CheckCircle2 size={18} /> Valider</button>
+            <button className="btn-outline" onClick={generatePDF}><Download size={18} /> Exporter PDF</button>
+            <button className="btn-primary" onClick={() => alert("Validation de l'attachement envoyée au Maître d'Œuvre !")}><CheckCircle2 size={18} /> Valider l'attachement</button>
           </div>
         </div>
       </div>
