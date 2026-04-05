@@ -51,7 +51,7 @@ const Login = ({ onLogin }) => {
             <HardHat size={22} color="white" />
           </div>
           <div>
-            <div className="font-bold text-white text-lg leading-tight">BTP Manager DZ</div>
+            <div className="font-bold text-white text-lg leading-tight">Atlas Manager</div>
             <div className="text-xs" style={{ color: '#64748b' }}>Gestion de Chantiers • Algérie</div>
           </div>
         </div>
@@ -86,7 +86,7 @@ const Login = ({ onLogin }) => {
         {/* Footer */}
         <div>
           <p className="text-xs" style={{ color: '#4a5568' }}>
-            © 2026 BTP Manager DZ — Tous droits réservés
+            © 2026 Atlas Manager — Tous droits réservés
           </p>
         </div>
       </div>
@@ -99,7 +99,7 @@ const Login = ({ onLogin }) => {
             <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: '#E07B2A' }}>
               <HardHat size={20} color="white" />
             </div>
-            <span className="font-bold text-lg text-gray-800">BTP Manager DZ</span>
+            <span className="font-bold text-lg text-gray-800">Atlas Manager</span>
           </div>
 
           <div className="card p-8">

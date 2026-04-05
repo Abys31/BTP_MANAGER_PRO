@@ -5,39 +5,15 @@ import Header from './components/Header';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Projets from './pages/Projets';
-
-// --- Placeholder pages for modules coming soon ---
-const ModulePage = ({ title, subtitle, icon }) => (
-  <div className="p-6 md:p-8">
-    <div className="page-header">
-      <div>
-        <h1 className="page-title">{title}</h1>
-        <p className="page-subtitle">{subtitle || 'Module en développement'}</p>
-      </div>
-    </div>
-    <div className="card p-16 text-center">
-      <div className="empty-state">
-        <div className="empty-state-icon mx-auto mb-4" style={{ width: 72, height: 72, background: '#fff7ed', borderRadius: '50%', display:'flex', alignItems:'center', justifyContent:'center' }}>
-          <span style={{ fontSize: 32 }}>{icon || '🚧'}</span>
-        </div>
-        <h3 className="text-lg font-semibold text-gray-700 mb-2">{title}</h3>
-        <p className="text-gray-400 text-sm">Ce module est en cours de développement et sera disponible prochainement.</p>
-      </div>
-    </div>
-  </div>
-);
-
-const modules = {
-  '/achats':    { title: 'Achats & Fournisseurs', subtitle: 'Commandes, livraisons, factures et paiements', icon: '🛒' },
-  '/stocks':    { title: 'Stocks & Matériaux', subtitle: 'Catalogue, mouvements et inventaires', icon: '📦' },
-  '/rh':        { title: 'Ressources Humaines', subtitle: 'Employés, pointage, congés et avances', icon: '👥' },
-  '/paie':      { title: 'Paie & Bulletins', subtitle: 'Bulletins de paie, IRG/CNAS, livre de paie', icon: '💰' },
-  '/materiel':  { title: 'Immobilisations', subtitle: 'Matériel, affectations et maintenances', icon: '🚛' },
-  '/commercial':{ title: 'Commercial Clients', subtitle: 'Lots, contrats de vente, échéanciers', icon: '🏠' },
-  '/depenses':  { title: 'Dépenses & Charges', subtitle: 'Dépenses directes, charges fixes, sous-traitance', icon: '📊' },
-  '/finances':  { title: 'Finances & Budget', subtitle: 'Suivi budgétaire, reporting et KPIs', icon: '📈' },
-  '/settings':  { title: 'Paramètres', subtitle: 'Configuration entreprise et utilisateurs', icon: '⚙️' },
-};
+import Achats from './pages/Achats';
+import Stocks from './pages/Stocks';
+import RH from './pages/RH';
+import Paie from './pages/Paie';
+import Materiel from './pages/Materiel';
+import Commercial from './pages/Commercial';
+import Depenses from './pages/Depenses';
+import Finances from './pages/Finances';
+import Settings from './pages/Settings';
 
 function App() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -91,10 +67,8 @@ function App() {
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: '#f4f5f7' }}>
       <Sidebar isOpen={sidebarOpen} user={user} onLogout={handleLogout} />
-
       <div style={{ marginLeft: sidebarWidth, flex: 1, display: 'flex', flexDirection: 'column', transition: 'margin-left 0.3s', minWidth: 0 }}>
         <Header toggleSidebar={() => setSidebarOpen(!sidebarOpen)} user={user} />
-
         <main style={{ flex: 1, overflow: 'auto' }}>
           <Routes>
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
@@ -102,9 +76,15 @@ function App() {
             <Route path="/dashboard" element={<Dashboard user={user} />} />
             <Route path="/projets" element={<Projets />} />
             <Route path="/projets/:id" element={<Projets />} />
-            {Object.entries(modules).map(([path, { title, subtitle, icon }]) => (
-              <Route key={path} path={path} element={<ModulePage title={title} subtitle={subtitle} icon={icon} />} />
-            ))}
+            <Route path="/achats" element={<Achats />} />
+            <Route path="/stocks" element={<Stocks />} />
+            <Route path="/rh" element={<RH />} />
+            <Route path="/paie" element={<Paie />} />
+            <Route path="/materiel" element={<Materiel />} />
+            <Route path="/commercial" element={<Commercial />} />
+            <Route path="/depenses" element={<Depenses />} />
+            <Route path="/finances" element={<Finances />} />
+            <Route path="/settings" element={<Settings />} />
             <Route path="*" element={
               <div className="p-8 text-center">
                 <h2 className="text-xl font-bold text-gray-600">404 — Page introuvable</h2>

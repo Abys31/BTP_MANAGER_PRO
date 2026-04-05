@@ -40,7 +40,7 @@ const Header = ({ toggleSidebar, user }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const currentRoute = routeTitles[location.pathname] || { title: 'BTP Manager DZ', sub: '' };
+  const currentRoute = routeTitles[location.pathname] || { title: 'Atlas Manager', sub: '' };
 
   const handleAction = (path) => {
     setShowActions(false);

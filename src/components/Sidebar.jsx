@@ -71,8 +71,8 @@ const Sidebar = ({ isOpen, user, onLogout }) => {
         </div>
         {isOpen && (
           <div>
-            <div className="font-bold text-sm text-white leading-tight">BTP Manager DZ</div>
-            <div className="text-xs" style={{ color: '#64748b' }}>BTP Algérie</div>
+            <div className="font-bold text-sm text-white leading-tight">Atlas Manager</div>
+            <div className="text-xs" style={{ color: '#64748b' }}>Gestion BTP • Algérie</div>
           </div>
         )}
       </div>
