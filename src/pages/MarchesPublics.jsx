@@ -1,328 +1,213 @@
-import React, { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { wilayas } from '../data/wilayas'
-import { api } from '../utils/api'
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
-  Save, 
+  Plus, 
+  Search, 
+  Filter, 
   FileText, 
-  Landmark, 
-  Wallet, 
-  AlertTriangle, 
-  Loader2, 
-  CheckCircle,
-  FileSpreadsheet,
-  Plus
-} from 'lucide-react'
+  ShieldCheck, 
+  TrendingUp,
+  Clock,
+  Calendar,
+  MoreVertical,
+  ChevronRight,
+  Landmark
+} from 'lucide-react';
+import { api } from '../utils/api';
 
-const MarchesPublics = () => {
-  const [loading, setLoading] = useState(false)
-  const [success, setSuccess] = useState(false)
-  const [error, setError] = useState('')
-  const [marches, setMarches] = useState([])
-  const [formData, setFormData] = useState({
-    maitreOuvrage: '',
-    operation: '',
-    numeroOperation: '',
-    wilaya: '16',
-    type: 'marché',
-    numeroMarche: '',
-    dateMarche: '',
-    objet: '',
-    visaCF: '',
-    dateVisaCF: '',
-    valeurHT: '',
-    tva: '19',
-    retenueGarantie: true,
-    cautionBonneEx: false
-  })
+const formatDA = (v) => {
+  return new Intl.NumberFormat('fr-DZ').format(v || 0) + ' DA';
+};
 
-  const navigate = useNavigate()
+export default function MarchesPublics() {
+  const [marches, setMarches] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [filterStatus, setFilterStatus] = useState('ALL');
+  const navigate = useNavigate();
 
   useEffect(() => {
-    fetchMarches()
-  }, [])
+    fetchMarches();
+  }, []);
 
   const fetchMarches = async () => {
     try {
-      const data = await api.getMarches()
-      setMarches(data || [])
+      const data = await api.get('/marches');
+      setMarches(data || []);
     } catch (err) {
-      console.error(err)
-    }
-  }
-
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }))
-  }
-
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setLoading(true)
-    setSuccess(false)
-    setError('')
-    try {
-      const payload = {
-        ...formData,
-        valeurHT: parseFloat(formData.valeurHT) || 0,
-        tva: parseFloat(formData.tva) || 19,
-        dateMarche: formData.dateMarche ? new Date(formData.dateMarche) : null,
-        dateVisaCF: formData.dateVisaCF ? new Date(formData.dateVisaCF) : null,
-      }
-      const data = await api.createMarche(payload)
-      if (data.id) {
-        setSuccess(true)
-        setFormData({
-            maitreOuvrage: '',
-            operation: '',
-            numeroOperation: '',
-            wilaya: '16',
-            type: 'marché',
-            numeroMarche: '',
-            dateMarche: '',
-            objet: '',
-            visaCF: '',
-            dateVisaCF: '',
-            valeurHT: '',
-            tva: '19',
-            retenueGarantie: true,
-            cautionBonneEx: false
-        })
-        fetchMarches()
-        setTimeout(() => setSuccess(false), 3000)
-      } else {
-        setError(data.message || 'Erreur lors de la sauvegarde')
-      }
-    } catch (err) {
-      setError('Impossible de se connecter au serveur')
+      console.error(err);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
+
+  const filteredMarches = marches.filter(m => {
+    const matchesSearch = (m.titre || '').toLowerCase().includes(search.toLowerCase()) || 
+                          (m.numero_contrat || '').toLowerCase().includes(search.toLowerCase());
+    const matchesStatus = filterStatus === 'ALL' || m.statut === filterStatus;
+    return matchesSearch && matchesStatus;
+  });
+
+  const stats = [
+    { label: 'Marchés Total', value: marches.length, icon: FileText, color: '#F97316' },
+    { label: 'Marchés Actifs', value: marches.filter(m => m.statut === 'ACTIF').length, icon: ShieldCheck, color: '#10B981' },
+    { label: 'Montant Total HT', value: formatDA(marches.reduce((acc, m) => acc + (m.montant_ht || 0), 0)), icon: TrendingUp, color: '#3B82F6' },
+  ];
+
+  const getStatusInfo = (status) => {
+    switch (status) {
+      case 'ACTIF': return { color: '#10B981', label: 'Actif', bg: '#D1FAE5' };
+      case 'TERMINE': return { color: '#6B7280', label: 'Terminé', bg: '#F3F4F6' };
+      case 'RESILIE': return { color: '#EF4444', label: 'Résilié', bg: '#FEE2E2' };
+      default: return { color: '#F59E0B', label: 'En attente', bg: '#FEF3C7' };
+    }
+  };
 
   return (
-    <div className="marche-public-page">
-      <div className="page-header">
-        <h1>Nouveau Marché Public</h1>
-        <div className="header-actions">
-          {success && <div className="success-toast animate-fade-in"><CheckCircle size={16} /> Enregistré !</div>}
-          {error && <div className="error-toast animate-fade-in"><AlertTriangle size={16} /> {error}</div>}
-          
-          <button className="btn-secondary" onClick={() => window.history.back()}>Annuler</button>
-          <button className="btn-primary" onClick={handleSubmit} disabled={loading}>
-            {loading ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
-            <span>{loading ? 'Sauvegarde...' : 'Enregistrer'}</span>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-end justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-[#111827]">Marchés Publics</h1>
+          <p className="text-gray-500 font-medium">Gestion et suivi des contrats et conventions</p>
+        </div>
+        <button 
+          onClick={() => navigate('/marches-publics/nouveau')}
+          className="bg-[#F97316] hover:bg-[#EA6C0A] text-white px-5 py-2.5 rounded-lg flex items-center gap-2 font-bold transition-all shadow-sm"
+        >
+          <Plus size={20} strokeWidth={3} />
+          <span>Nouveau Marché</span>
+        </button>
+      </div>
+
+      {/* KPI Row */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {stats.map((s, i) => (
+          <div key={i} className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm flex items-center gap-4">
+            <div className="w-12 h-12 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${s.color}15`, color: s.color }}>
+              <s.icon size={24} />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">{s.label}</p>
+              <h3 className="text-xl font-black text-[#111827]">{s.value}</h3>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Filters & Search */}
+      <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex flex-col md:flex-row gap-4 items-center">
+        <div className="relative flex-1 w-full">
+          <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input 
+            type="text" 
+            placeholder="Rechercher par numéro ou intitulé..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-[#F97316] focus:outline-none transition-all"
+          />
+        </div>
+        <div className="flex items-center gap-2 w-full md:w-auto">
+          <div className="relative w-full md:w-48">
+            <Filter size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <select 
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              className="w-full pl-9 pr-8 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm appearance-none focus:ring-2 focus:ring-[#F97316] focus:outline-none cursor-pointer"
+            >
+              <option value="ALL">Tous les statuts</option>
+              <option value="ACTIF">Actif</option>
+              <option value="TERMINE">Terminé</option>
+              <option value="RESILIE">Résilié</option>
+            </select>
+          </div>
+          <button className="p-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-500 hover:bg-gray-100">
+            <MoreVertical size={20} />
           </button>
         </div>
       </div>
 
-      <div className="form-grid">
-        <section className="form-section">
-          <div className="section-header">
-            <FileText className="section-icon" size={20} />
-            <h2>Informations Générales</h2>
-          </div>
-          
-          <div className="form-group-row">
-            <div className="form-group flex-2">
-              <label>Maître d'Ouvrage</label>
-              <input name="maitreOuvrage" value={formData.maitreOuvrage} onChange={handleChange} placeholder="ex: DEP Alger, Wilaya de Tipaza..." />
-            </div>
-          </div>
-
-          <div className="form-group-row">
-            <div className="form-group flex-2">
-              <label>Intitulé de l'opération</label>
-              <input name="operation" value={formData.operation} onChange={handleChange} placeholder="ex: Réalisation d'un groupe scolaire..." />
-            </div>
-            <div className="form-group flex-1">
-              <label>Wilaya</label>
-              <select name="wilaya" value={formData.wilaya} onChange={handleChange}>
-                {wilayas.map(w => (
-                  <option key={w.code} value={w.code}>{w.code} - {w.name}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div className="form-group-row">
-            <div className="form-group">
-              <label>Numéro de l'opération</label>
-              <input name="numeroOperation" value={formData.numeroOperation} onChange={handleChange} />
-            </div>
-            <div className="form-group">
-              <label>Type de contrat</label>
-              <select name="type" value={formData.type} onChange={handleChange}>
-                <option value="marché">Marché</option>
-                <option value="convention">Convention</option>
-                <option value="avenant">Avenant</option>
-              </select>
-            </div>
-          </div>
-        </section>
-
-        <section className="form-section">
-          <div className="section-header">
-            <Landmark className="section-icon" size={20} />
-            <h2>Détails Réglementaires</h2>
-          </div>
-          <div className="form-group-row">
-            <div className="form-group">
-              <label>Numéro du Marché</label>
-              <input name="numeroMarche" value={formData.numeroMarche} onChange={handleChange} />
-            </div>
-            <div className="form-group">
-              <label>Date du Marché</label>
-              <input type="date" name="dateMarche" value={formData.dateMarche} onChange={handleChange} />
-            </div>
-          </div>
-          <div className="form-group-row">
-            <div className="form-group">
-              <label>Visa CF (Contrôle Financier)</label>
-              <input name="visaCF" value={formData.visaCF} onChange={handleChange} placeholder="N° de visa..." />
-            </div>
-            <div className="form-group">
-              <label>Date Visa CF</label>
-              <input type="date" name="dateVisaCF" value={formData.dateVisaCF} onChange={handleChange} />
-            </div>
-          </div>
-        </section>
-
-        <section className="form-section">
-          <div className="section-header">
-            <Wallet className="section-icon" size={20} />
-            <h2>Paramètres Financiers</h2>
-          </div>
-          <div className="form-group-row">
-            <div className="form-group">
-              <label>Valeur HT (DZD)</label>
-              <input type="number" name="valeurHT" value={formData.valeurHT} onChange={handleChange} />
-            </div>
-            <div className="form-group">
-              <label>TVA (%)</label>
-              <select name="tva" value={formData.tva} onChange={handleChange}>
-                <option value="19">19% (Standard)</option>
-                <option value="9">9% (Spécifique)</option>
-                <option value="0">0% (Exonéré)</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="guarantee-section">
-            <div className="checkbox-group">
-              <input type="checkbox" id="retenueGarantie" name="retenueGarantie" checked={formData.retenueGarantie} onChange={handleChange} />
-              <label htmlFor="retenueGarantie">Appliquer la retenue de garantie (5%)</label>
-            </div>
-            
-            {!formData.retenueGarantie && (
-              <div className="checkbox-group warning animate-fade-in">
-                <AlertTriangle size={16} color="var(--warning)" />
-                <input type="checkbox" id="cautionBonneEx" name="cautionBonneEx" checked={formData.cautionBonneEx} onChange={handleChange} />
-                <label htmlFor="cautionBonneEx">Caution de bonne exécution requise</label>
-              </div>
-            )}
-          </div>
-        </section>
-      </div>
-
-      <div className="marches-list animate-fade-in">
-        <div className="list-header">
-          <h2>Mes Marchés Publics ({marches.length})</h2>
-          <p>Gérez vos DQE et structures de lots par projet</p>
+      {/* Grid of Market Cards */}
+      {loading ? (
+        <div className="py-20 text-center">
+          <div className="animate-spin w-10 h-10 border-4 border-gray-200 border-t-[#F97316] rounded-full mx-auto mb-4" />
+          <p className="text-gray-500 text-sm font-medium">Chargement des marchés...</p>
         </div>
-        
-        <div className="list-grid">
-          {marches.length === 0 ? (
-            <div className="empty-list">Aucun marché enregistré.</div>
-          ) : (
-            marches.map(m => (
-              <div key={m.id} className="marche-card" onClick={() => navigate(`/marches/${m.id}`)}>
-                <div className="card-info">
-                  <h3>{m.operation || "Sans titre"}</h3>
-                  <span className="maitre">{m.maitreOuvrage}</span>
-                  <div className="tags">
-                    <span className="tag-wilaya">{m.wilaya}</span>
-                    <span className="tag-type">{m.type}</span>
+      ) : filteredMarches.length === 0 ? (
+        <div className="bg-white border-2 border-dashed border-gray-200 rounded-2xl p-20 text-center">
+          <FileText size={48} className="mx-auto text-gray-300 mb-4" />
+          <h3 className="text-lg font-bold text-gray-700">Aucun marché trouvé</h3>
+          <p className="text-gray-500 text-sm mt-1">Commencez par créer votre premier marché public.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredMarches.map((m) => {
+            const status = getStatusInfo(m.statut);
+            return (
+              <div 
+                key={m.id}
+                onClick={() => navigate(`/marches-publics/${m.id}`)}
+                className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer overflow-hidden group"
+              >
+                <div className="p-5 space-y-4">
+                  {/* Card Header Tags */}
+                  <div className="flex justify-between items-start">
+                    <span className="bg-gray-100 text-gray-600 text-[10px] font-black px-2 py-1 rounded uppercase tracking-wider">
+                      N° {m.numero_contrat}
+                    </span>
+                    <div 
+                      className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase"
+                      style={{ backgroundColor: status.bg, color: status.color }}
+                    >
+                      <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: status.color }} />
+                      {status.label}
+                    </div>
+                  </div>
+
+                  {/* Title */}
+                  <h3 className="text-sm font-black text-[#111827] uppercase leading-tight line-clamp-2 h-10 group-hover:text-[#F97316] transition-colors">
+                    {m.titre}
+                  </h3>
+
+                  {/* Info Grid */}
+                  <div className="grid grid-cols-2 gap-4 py-2">
+                    <div className="space-y-1">
+                      <p className="text-[10px] text-gray-400 font-bold uppercase flex items-center gap-1">
+                        <Calendar size={10} /> ODS
+                      </p>
+                      <p className="text-[11px] font-bold text-gray-700 italic">
+                        {m.ods_demarrage ? new Date(m.ods_demarrage).toLocaleDateString('fr-DZ') : 'À définir'}
+                      </p>
+                    </div>
+                    <div className="space-y-1 text-right">
+                      <p className="text-[10px] text-gray-400 font-bold uppercase flex items-center gap-1 justify-end">
+                        <Clock size={10} /> Délai
+                      </p>
+                      <p className="text-[11px] font-bold text-gray-700 italic">
+                        {m.delai_initial_jours ? `${m.delai_initial_jours} jours` : '---'}
+                      </p>
+                    </div>
                   </div>
                 </div>
-                <div className="card-footer">
-                  <span className="valeur">{(m.valeurHT || 0).toLocaleString()} DA</span>
-                  <button className="btn-dqe" onClick={(e) => {
-                    e.stopPropagation();
-                    navigate(`/marches/${m.id}/dqe`)
-                  }}>
-                    <FileSpreadsheet size={16} /> <span>DQE</span>
-                  </button>
+
+                {/* Footer bar */}
+                <div className="bg-gray-50 px-5 py-3 border-t border-gray-100 flex items-center justify-between group-hover:bg-[#FFF7ED] transition-colors">
+                  <div className="flex items-center gap-2">
+                    <Landmark size={14} className="text-gray-400" />
+                    <span className="text-[11px] font-bold text-gray-600 whitespace-nowrap overflow-hidden text-ellipsis max-w-[120px]">
+                      {m.maitre_ouvrage_nom || 'Client Public'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1 text-[#F97316] opacity-0 group-hover:opacity-100 transition-opacity">
+                    <span className="text-[11px] font-black uppercase tracking-tighter">Ouvrir</span>
+                    <ChevronRight size={14} strokeWidth={3} />
+                  </div>
                 </div>
               </div>
-            ))
-          )}
+            );
+          })}
         </div>
-      </div>
-
-      <style jsx="true">{`
-        .marche-public-page { max-width: 1000px; margin: 0 auto; color: var(--text-main); }
-        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-        .page-header h1 { font-size: 24px; font-weight: 700; }
-        
-        .header-actions { display: flex; gap: 12px; align-items: center; }
-        .success-toast { background: rgba(34, 197, 94, 0.1); color: #4ade80; padding: 8px 16px; border-radius: 6px; display: flex; align-items: center; gap: 8px; font-size: 14px; }
-        .error-toast { background: rgba(239, 68, 68, 0.1); color: #f87171; padding: 8px 16px; border-radius: 6px; display: flex; align-items: center; gap: 8px; font-size: 14px; }
-
-        .btn-primary { background-color: var(--primary); color: white; padding: 10px 20px; border-radius: 8px; display: flex; align-items: center; gap: 8px; font-weight: 600; cursor: pointer; }
-        .btn-secondary { background: var(--bg-sidebar); border: 1px solid var(--border-strong); color: var(--text-secondary); padding: 10px 20px; border-radius: 8px; cursor: pointer; }
-
-        .form-grid { display: flex; flex-direction: column; gap: 24px; margin-bottom: 60px; }
-        .form-section { background-color: var(--bg-card); padding: 24px; border-radius: 12px; border: 1px solid var(--border); }
-        .section-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
-        .section-header h2 { font-size: 16px; font-weight: 600; }
-        .section-icon { color: var(--primary); }
-
-        .form-group-row { display: flex; gap: 20px; margin-bottom: 16px; }
-        .form-group { flex: 1; display: flex; flex-direction: column; gap: 8px; }
-        .flex-2 { flex: 2; }
-        .flex-1 { flex: 1; }
-        label { font-size: 13px; color: var(--text-secondary); }
-        input, select, textarea { background-color: var(--bg-sidebar); border: 1px solid var(--border-strong); border-radius: 6px; padding: 10px 12px; color: var(--text-main); outline: none; transition: var(--transition); }
-        input:focus { border-color: var(--primary); }
-
-        .guarantee-section { margin-top: 16px; padding: 16px; background-color: rgba(255, 255, 255, 0.02); border-radius: 8px; }
-        .checkbox-group { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
-        .checkbox-group.warning { margin-top: 12px; color: var(--warning); font-size: 13px; }
-
-        /* Project List Styles */
-        .marches-list { margin-top: 60px; padding-top: 40px; border-top: 1px solid var(--border); }
-        .list-header { margin-bottom: 30px; }
-        .list-header h2 { font-size: 20px; margin-bottom: 4px; }
-        .list-header p { font-size: 13px; color: var(--text-muted); }
-
-        .list-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px; }
-        .marche-card { background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border); overflow: hidden; transition: all 0.3s ease; }
-        .marche-card:hover { transform: translateY(-4px); border-color: var(--primary); box-shadow: 0 12px 24px -10px rgba(0,0,0,0.3); }
-        
-        .card-info { padding: 24px; }
-        .card-info h3 { font-size: 17px; font-weight: 700; margin-bottom: 8px; line-height: 1.4; height: 48px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-        .card-info .maitre { font-size: 13px; color: var(--text-muted); display: block; margin-bottom: 16px; }
-        
-        .tags { display: flex; gap: 8px; }
-        .tag-wilaya { font-size: 11px; background: var(--primary-muted); color: var(--primary); padding: 4px 10px; border-radius: 6px; font-weight: 700; }
-        .tag-type { font-size: 11px; background: rgba(255,255,255,0.05); color: var(--text-secondary); padding: 4px 10px; border-radius: 6px; }
-        
-        .card-footer { padding: 16px 24px; background: rgba(0,0,0,0.25); border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
-        .card-footer .valeur { font-weight: 700; font-size: 15px; color: var(--primary); }
-        .btn-dqe { display: flex; align-items: center; gap: 8px; background: var(--bg-sidebar); border: 1px solid var(--border-strong); color: white; font-size: 13px; padding: 8px 16px; border-radius: 8px; transition: var(--transition); }
-        .btn-dqe:hover { border-color: var(--primary); background: var(--primary); }
-        
-        .empty-list { grid-column: 1 / -1; text-align: center; padding: 60px; color: var(--text-muted); background: var(--bg-card); border-radius: 12px; border: 1px dashed var(--border); }
-
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        .animate-spin { animation: spin 1s linear infinite; }
-      `}</style>
+      )}
     </div>
-  )
+  );
 }
-
-export default MarchesPublics

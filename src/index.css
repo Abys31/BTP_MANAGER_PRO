@@ -9,32 +9,51 @@
 @theme {
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
 
-  /* Brand Colors */
-  --color-brand-dark: #1a1f2e;        /* Sidebar bg */
-  --color-brand-dark-2: #252b3b;      /* Sidebar hover */
-  --color-brand-dark-3: #2e3447;      /* Sidebar border */
-  --color-brand-orange: #E07B2A;      /* Primary accent */
-  --color-brand-orange-dark: #c96e22; /* Accent hover */
-  --color-brand-blue: #1B3A5C;        /* Secondary accent */
-
-  /* Semantic Tokens (Light mode main content) */
-  --color-background: #f4f5f7;
-  --color-surface: #ffffff;
-  --color-border: #e2e8f0;
-  --color-border-strong: #cbd5e1;
-  --color-foreground: #1e293b;
-  --color-foreground-muted: #64748b;
-  --color-foreground-subtle: #94a3b8;
-
+  /* Brand Colors - Exact from Spec */
+  --color-orange: #F97316;
+  --color-orange-hover: #EA6C0A;
+  --color-orange-light: #FFF7ED;
+  --color-sidebar-bg: #1C2333;
+  --color-sidebar-hover: #252D3D;
+  --color-sidebar-active: rgba(249, 115, 22, 0.15);
+  --color-page-bg: #F8F9FA;
+  
+  /* Standard palette mapping */
+  --color-background: #F8F9FA;
+  --color-surface: #FFFFFF;
+  --color-border: #E5E7EB;
+  --color-border-light: #F3F4F6;
+  --color-text-dark: #111827;
+  --color-text-muted: #6B7280;
+  --color-text-light: #9CA3AF;
+  
   /* Status Colors */
-  --color-success: #10b981;
-  --color-success-bg: #d1fae5;
-  --color-warning: #f59e0b;
-  --color-warning-bg: #fef3c7;
-  --color-danger: #ef4444;
-  --color-danger-bg: #fee2e2;
-  --color-info: #3b82f6;
-  --color-info-bg: #dbeafe;
+  --color-green: #10B981;
+  --color-green-light: #D1FAE5;
+  --color-blue: #3B82F6;
+  --color-blue-light: #DBEAFE;
+  --color-red: #EF4444;
+  --color-red-light: #FEE2E2;
+  --color-yellow: #F59E0B;
+  --color-yellow-light: #FEF3C7;
+  --color-purple: #8B5CF6;
+  --color-purple-light: #EDE9FE;
+}
+
+:root {
+  --orange: #F97316;
+  --orange-light: #FFF7ED;
+  --dark-sidebar: #1C2333;
+  --dark-sidebar2: #252D3D;
+  --white: #FFFFFF;
+  --gray-bg: #F8F9FA;
+  --text-main: #1A1A2E;
+  --text-muted: #6B7280;
+  --border: #E5E7EB;
+  --green: #10B981;
+  --blue: #3B82F6;
+  --red: #EF4444;
+  --yellow: #F59E0B;
 }
 
 * { box-sizing: border-box; }

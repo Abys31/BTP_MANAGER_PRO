@@ -4,16 +4,17 @@ import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import MarchesPublics from './pages/MarchesPublics';
 import Projets from './pages/Projets';
+import ChantierMode from './pages/ChantierMode';
+import Documents from './pages/Documents';
 import Achats from './pages/Achats';
-import Stocks from './pages/Stocks';
-import RH from './pages/RH';
-import Paie from './pages/Paie';
-import Materiel from './pages/Materiel';
-import Commercial from './pages/Commercial';
-import Depenses from './pages/Depenses';
-import Finances from './pages/Finances';
+import Finance from './pages/Finance';
 import Settings from './pages/Settings';
+import MarcheNouveau from './pages/MarcheNouveau';
+import MarcheDetail from './pages/MarcheDetail';
+import ChantierDetail from './pages/ChantierDetail';
+import Placeholder from './pages/Placeholder';
 
 function App() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -24,7 +25,11 @@ function App() {
   useEffect(() => {
     const savedUser = localStorage.getItem('btp_user');
     if (savedUser) {
-      try { setUser(JSON.parse(savedUser)); } catch(e) { localStorage.removeItem('btp_user'); }
+      try { 
+        setUser(JSON.parse(savedUser)); 
+      } catch(e) { 
+        localStorage.removeItem('btp_user'); 
+      }
     }
     setLoading(false);
   }, []);
@@ -44,10 +49,10 @@ function App() {
 
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f4f5f7' }}>
-        <div style={{ textAlign: 'center' }}>
-          <div className="animate-spin" style={{ width: 40, height: 40, border: '3px solid #e2e8f0', borderTopColor: '#E07B2A', borderRadius: '50%', margin: '0 auto 16px' }} />
-          <p style={{ color: '#64748b', fontSize: 14 }}>Chargement...</p>
+      <div className="min-h-screen flex items-center justify-center bg-[#F8F9FA]">
+        <div className="text-center">
+          <div className="animate-spin w-10 h-10 border-4 border-gray-200 border-t-[#F97316] rounded-full mx-auto mb-4" />
+          <p className="text-gray-500 text-sm font-medium">Chargement de BTP Manager...</p>
         </div>
       </div>
     );
@@ -62,32 +67,60 @@ function App() {
     );
   }
 
-  const sidebarWidth = sidebarOpen ? '240px' : '72px';
-
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#f4f5f7' }}>
+    <div className="flex min-h-screen bg-[#F8F9FA]">
       <Sidebar isOpen={sidebarOpen} user={user} onLogout={handleLogout} />
-      <div style={{ marginLeft: sidebarWidth, flex: 1, display: 'flex', flexDirection: 'column', transition: 'margin-left 0.3s', minWidth: 0 }}>
-        <Header toggleSidebar={() => setSidebarOpen(!sidebarOpen)} user={user} />
-        <main style={{ flex: 1, overflow: 'auto' }}>
+      
+      <div 
+        className="flex-1 flex flex-col transition-all duration-300" 
+        style={{ marginLeft: sidebarOpen ? '260px' : '60px' }}
+      >
+        <Header 
+          toggleSidebar={() => setSidebarOpen(!sidebarOpen)} 
+          user={user} 
+          onActionClick={() => console.log('Action clicked')}
+        />
+        
+        <main className="flex-1 p-6 overflow-auto">
           <Routes>
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            <Route path="/login" element={<Navigate to="/dashboard" replace />} />
             <Route path="/dashboard" element={<Dashboard user={user} />} />
-            <Route path="/projets" element={<Projets />} />
-            <Route path="/projets/:id" element={<Projets />} />
-            <Route path="/achats" element={<Achats />} />
-            <Route path="/stocks" element={<Stocks />} />
-            <Route path="/rh" element={<RH />} />
-            <Route path="/paie" element={<Paie />} />
-            <Route path="/materiel" element={<Materiel />} />
-            <Route path="/commercial" element={<Commercial />} />
-            <Route path="/depenses" element={<Depenses />} />
-            <Route path="/finances" element={<Finances />} />
-            <Route path="/settings" element={<Settings />} />
+            
+            <Route path="/appels-offres" element={<Placeholder title="Appels d'offres" />} />
+            <Route path="/marches-publics" element={<MarchesPublics />} />
+            <Route path="/marches-publics/nouveau" element={<MarcheNouveau />} />
+            <Route path="/marches-publics/:id" element={<MarcheDetail />} />
+            
+            <Route path="/lots-chantiers" element={<Projets />} />
+            <Route path="/lots-chantiers/:id" element={<Projets />} />
+            
+            <Route path="/mode-chantier" element={<ChantierMode />} />
+            <Route path="/mode-chantier/:sub" element={<ChantierMode />} />
+            
+            <Route path="/documents" element={<Documents />} />
+            <Route path="/approvisionnement" element={<Achats />} />
+            <Route path="/approvisionnement/:id" element={<Achats />} />
+            
+            <Route path="/finance" element={<Finance />} />
+            <Route path="/finance/:tab" element={<Finance />} />
+            
+            <Route path="/parametres" element={<Settings />} />
+            <Route path="/parametres/:tab" element={<Settings />} />
+            
+            <Route path="/outils/calculs-metiers" element={<Placeholder title="Calculs Métiers" />} />
+            <Route path="/outils/ia" element={<Placeholder title="Estimation IA" />} />
+            <Route path="/outils/prix-marche" element={<Placeholder title="Prix du marché" />} />
+            
             <Route path="*" element={
-              <div className="p-8 text-center">
-                <h2 className="text-xl font-bold text-gray-600">404 — Page introuvable</h2>
+              <div className="py-20 text-center">
+                <h2 className="text-2xl font-bold text-gray-700">404 — Page introuvable</h2>
+                <p className="text-gray-500 mt-2">La page que vous recherchez n'existe pas ou a été déplacée.</p>
+                <button 
+                  onClick={() => navigate('/dashboard')}
+                  className="mt-6 text-[#F97316] font-bold hover:underline"
+                >
+                  Retour au tableau de bord
+                </button>
               </div>
             } />
           </Routes>

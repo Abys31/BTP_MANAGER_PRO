@@ -1,5 +1,5 @@
 {
-  "name": "atlas-manager",
+  "name": "btp-manager-dz",
   "private": true,
   "version": "0.1.0",
   "main": "electron/main.cjs",

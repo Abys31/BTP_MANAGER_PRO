@@ -7,697 +7,558 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// MULTI-TENANCY
 model Company {
-  id         Int      @id @default(autoincrement())
-  nom        String
-  rc         String?
-  nif        String?
-  nis        String?
-  art        String?
-  adresse    String?
-  telephone  String?
-  email      String?
-  logo_url   String?
-  created_at DateTime @default(now())
-
-  users               User[]
-  projects            Project[]
-  chantiers           Chantier[]
-  fournisseurs        Fournisseur[]
-  clients             Client[]
-  bons_commandes      BonCommande[]
-  factures_fournisseurs FactureFournisseur[]
-  categories_articles CategorieArticle[]
-  articles            Article[]
-  mouvements_stock    MouvementStock[]
-  inventaires         Inventaire[]
-  employes            Employe[]
-  pointages           Pointage[]
-  bulletins_paie      BulletinPaie[]
-  immobilisations     Immobilisation[]
-  contrats_vente      ContratVente[]
-  depenses_directes   DepenseDirecte[]
-  charges_fixes       ChargeFixe[]
-  sous_traitants      SousTraitant[]
-  contrats_st         ContratSousTraitance[]
-  documents           Document[]
-  audit_logs          AuditLog[]
+  id                    Int      @id @default(autoincrement())
+  nom                   String
+  telephone             String?
+  email                 String?
+  adresse               String?
+  wilaya                String?
+  ville                 String?
+  nif                   String?
+  rc                    String?
+  nis                   String?
+  cnas_numero           String?
+  code_activite         String?
+  logo_url              String?
+  created_at            DateTime @default(now())
+  
+  users                 User[]
+  chantiers             Chantier[]
+  marches               Marche[]
+  clients               Client[]
+  fournisseurs          Fournisseur[]
+  bons_commande         BonCommande[]
+  factures              Facture[]
+  devis                 Devis[]
+  depenses              Depense[]
+  comptes_tresorerie    CompteTresorerie[]
+  periodes_paie         PeriodePaie[]
+  cautions              CautionBancaire[]
+  calculs_metier        CalculMetier[]
+  prix_marche           PrixMarche[]
+  preference_notification PreferenceNotification?
 }
 
 model User {
-  id            Int      @id @default(autoincrement())
-  company_id    Int
-  nom           String
-  prenom        String
-  email         String   @unique
-  password_hash String
-  role          String   @default("READONLY") // SUPER_ADMIN, DIRECTEUR, CONDUCTEUR_TRAVAUX, COMPTABLE, POINTEUR, READONLY
-  telephone     String?
-  actif         Boolean  @default(true)
-  created_at    DateTime @default(now())
-
-  company       Company  @relation(fields: [company_id], references: [id])
-  audit_logs    AuditLog[]
-}
-
-// PROJETS & CHANTIERS
-model Project {
-  id              Int      @id @default(autoincrement())
-  company_id      Int
-  code            String
-  nom             String
-  type_projet     String   // LOTISSEMENT, PROMOTION_IMMOBILIERE, TRAVAUX_PUBLICS, BATIMENT, RENOVATION
-  statut          String   // ETUDE, EN_COURS, SUSPENDU, TERMINE, ANNULE
-  date_debut      DateTime
-  date_fin_prevue DateTime
-  date_fin_reelle DateTime?
-  budget_total    Float
-  adresse         String?
-  wilaya          String?
-  commune         String?
-  description     String?
-  created_by      Int
-  created_at      DateTime @default(now())
-
-  company         Company    @relation(fields: [company_id], references: [id])
-  chantiers       Chantier[]
-  lots            Lot[]
+  id                 Int      @id @default(autoincrement())
+  company_id         Int
+  nom                String
+  email              String   @unique
+  password_hash      String
+  role               String   // SUPER_ADMIN | DIRECTEUR | CHEF_CHANTIER | COMPTABLE | TERRAIN
+  telephone          String?
+  actif              Boolean  @default(true)
+  invitation_token   String?
+  invitation_expires DateTime?
+  created_at         DateTime @default(now())
+  
+  company            Company  @relation(fields: [company_id], references: [id])
 }
 
 model Chantier {
-  id              Int      @id @default(autoincrement())
-  project_id      Int
-  company_id      Int
-  code            String
-  nom             String
-  statut          String   // EN_COURS, TERMINE, etc.
-  date_debut      DateTime
-  date_fin_prevue DateTime
-  budget_alloue   Float
-  responsable_id  Int?
-  adresse         String?
-  superficie      Float?
-  description     String?
-
-  company               Company              @relation(fields: [company_id], references: [id])
-  project               Project              @relation(fields: [project_id], references: [id])
-  bons_commandes      BonCommande[]
-  bons_livraison      BonLivraison[]
-  mouvements_stock      MouvementStock[]
-  affectations_chantier AffectationChantier[]
-  pointages             Pointage[]
-  affectations_materiel AffectationMateriel[]
-  depenses_directes     DepenseDirecte[]
-  contrats_st         ContratSousTraitance[]
-  budgets               BudgetChantier[]
+  id                   Int      @id @default(autoincrement())
+  company_id           Int
+  nom                  String
+  type_chantier        String?  // Construction neuve | Rénovation | Extension | TP
+  chef_id              Int?
+  wilaya               String?
+  adresse              String?
+  statut               String   @default("EN_COURS") // EN_COURS | EN_PAUSE | TERMINE | ANNULE
+  avancement_physique  Float    @default(0)
+  avancement_eco       Float    @default(0)
+  budget_prevu         Float    @default(0)
+  budget_reel          Float    @default(0)
+  date_debut           DateTime?
+  date_fin_prevue      DateTime?
+  date_fin_reelle      DateTime?
+  marche_id            Int?
+  workflow_etape       String   @default("PROJET") // PROJET | MARCHE | DQE | AVENANTS | SITUATIONS
+  created_at           DateTime @default(now())
+  
+  company              Company  @relation(fields: [company_id], references: [id])
+  marche               Marche?  @relation(fields: [marche_id], references: [id])
+  
+  situations           SituationTravaux[]
+  taches               TachePlanning[]
+  journal_entrees      JournalChantier[]
+  pointages            PointageTerrain[]
+  dqe_items            DQEItem[]
+  bons_commande        BonCommande[]
+  devis                Devis[]
+  factures             Facture[]
+  depenses             Depense[]
 }
 
-// TIERS
-model Fournisseur {
-  id              Int      @id @default(autoincrement())
-  company_id      Int
-  raison_sociale  String
-  rc              String?
-  nif             String?
-  adresse         String?
-  wilaya          String?
-  telephone       String?
-  email           String?
-  rib             String?
-  banque          String?
-  solde_courant   Float    @default(0)
-  notes           String?
-  actif           Boolean  @default(true)
+model Marche {
+  id                      Int      @id @default(autoincrement())
+  company_id              Int
+  numero_contrat          String
+  titre                   String
+  statut                  String   @default("ACTIF") // ACTIF | TERMINE | RESILIE | EN_ATTENTE
+  origine                 String   @default("PUBLIC") // PUBLIC | PRIVE | GRE_A_GRE
+  maitre_ouvrage_nom      String?
+  maitre_ouvrage_adresse  String?
+  maitre_ouvrage_tel      String?
+  date_contrat            DateTime?
+  type_contrat            String?  // Conventionnel | Appel d'offres | Gré à gré
+  montant_ht              Float    @default(0)
+  tva_taux                Float    @default(19)
+  montant_ttc             Float    @default(0)
+  delai_initial_jours     Int?
+  ods_demarrage           DateTime?
+  fin_contractuelle       DateTime?
+  retenue_garantie_taux   Float    @default(0)
+  rabais_taux             Float    @default(0)
+  prix_revisables         Boolean  @default(false)
+  avance_forfaitaire      Float    @default(0)
+  taux_avance             Float    @default(0)
+  avance_appro            Float    @default(0)
+  taux_avance_appro       Float    @default(0)
+  caution_bonne_exec      Boolean  @default(false)
+  mode_plus_values        String   @default("SOUPLE") // STRICT | SOUPLE | LIBRE
+  visas_reglementaires    String?  // JSON array
+  created_at              DateTime @default(now())
+  
+  company                 Company  @relation(fields: [company_id], references: [id])
+  chantiers               Chantier[]
+  lots                    LotMarche[]
+  dqe_items               DQEItem[]
+  avenants                Avenant[]
+}
 
-  company         Company               @relation(fields: [company_id], references: [id])
-  bons_commandes  BonCommande[]
-  factures        FactureFournisseur[]
+model LotMarche {
+  id          Int      @id @default(autoincrement())
+  marche_id   Int
+  numero      String
+  description String?
+  montant_ht  Float    @default(0)
+  
+  marche      Marche   @relation(fields: [marche_id], references: [id])
+}
+
+model DQEItem {
+  id            Int      @id @default(autoincrement())
+  marche_id     Int?
+  chantier_id   Int?
+  code_article  String?
+  designation   String
+  unite         String
+  quantite      Float    @default(0)
+  prix_unitaire Float    @default(0)
+  montant_total Float    @default(0)
+  
+  marche        Marche?  @relation(fields: [marche_id], references: [id])
+  chantier      Chantier? @relation(fields: [chantier_id], references: [id])
+}
+
+model Avenant {
+  id           Int      @id @default(autoincrement())
+  marche_id    Int
+  numero       Int
+  objet        String
+  montant      Float    @default(0)
+  statut       String   @default("EN_COURS") // EN_COURS | VALIDE | REFUSE
+  date_avenant DateTime?
+  
+  marche       Marche   @relation(fields: [marche_id], references: [id])
+}
+
+model SituationTravaux {
+  id              Int      @id @default(autoincrement())
+  chantier_id     Int
+  numero          Int
+  periode_mois    Int
+  periode_annee   Int
+  montant_periode Float    @default(0)
+  montant_cumule  Float    @default(0)
+  montant_net     Float    @default(0)
+  statut          String   @default("SOUMISE") // SOUMISE | APPROUVEE | PAYEE
+  created_at      DateTime @default(now())
+  
+  chantier        Chantier @relation(fields: [chantier_id], references: [id])
+}
+
+model TachePlanning {
+  id          Int      @id @default(autoincrement())
+  chantier_id Int
+  nom         String
+  date_debut  DateTime?
+  date_fin    DateTime?
+  est_jalon   Boolean  @default(false)
+  avancement  Float    @default(0)
+  couleur     String?
+  
+  chantier    Chantier @relation(fields: [chantier_id], references: [id])
+}
+
+model JournalChantier {
+  id          Int      @id @default(autoincrement())
+  chantier_id Int
+  date_entree DateTime @default(now())
+  texte       String
+  auteur_id   Int?
+  photos      String?  // JSON array d'URLs
+  
+  chantier    Chantier @relation(fields: [chantier_id], references: [id])
+}
+
+model PointageTerrain {
+  id              Int      @id @default(autoincrement())
+  chantier_id     Int
+  employe_nom     String
+  date            DateTime
+  statut          String   // PRESENT | ABSENT | CONGE
+  heures_normales Float    @default(8)
+  heures_sup      Float    @default(0)
+  
+  chantier        Chantier @relation(fields: [chantier_id], references: [id])
 }
 
 model Client {
-  id             Int      @id @default(autoincrement())
-  company_id     Int
-  type_client    String   // PARTICULIER, ENTREPRISE
-  nom_complet    String
-  cin_ou_rc      String?
-  adresse        String?
-  wilaya         String?
-  telephone      String?
-  email          String?
-  notes          String?
-  actif          Boolean  @default(true)
-
-  company        Company        @relation(fields: [company_id], references: [id])
-  contrats_vente ContratVente[]
+  id           Int      @id @default(autoincrement())
+  company_id   Int
+  nom          String
+  email        String?
+  telephone    String?
+  adresse      String?
+  wilaya       String?
+  ville        String?
+  type         String   @default("PARTICULIER") // PARTICULIER | ENTREPRISE | ORGANISME_PUBLIC
+  actif        Boolean  @default(true)
+  created_at   DateTime @default(now())
+  
+  company      Company  @relation(fields: [company_id], references: [id])
+  factures     Facture[]
+  devis        Devis[]
 }
 
-// ACHATS & FOURNISSEURS
+model Fournisseur {
+  id           Int      @id @default(autoincrement())
+  company_id   Int
+  nom          String
+  contact_nom  String?
+  email        String?
+  telephone    String?
+  adresse      String?
+  zone         String?
+  actif        Boolean  @default(true)
+  created_at   DateTime @default(now())
+  
+  company      Company  @relation(fields: [company_id], references: [id])
+  bons_commande BonCommande[]
+}
+
 model BonCommande {
   id                    Int      @id @default(autoincrement())
   company_id            Int
-  chantier_id           Int
+  numero                String
   fournisseur_id        Int
-  numero_bc             String
-  date_bc               DateTime
+  chantier_id           Int?
+  statut                String   @default("BROUILLON") // BROUILLON | ENVOYE | PARTIELLEMENT_RECU | RECU | ANNULE
+  date_commande         DateTime @default(now())
   date_livraison_prevue DateTime?
-  statut                String   // BROUILLON, ENVOYE, PARTIELLEMENT_LIVRE, LIVRE, ANNULE
   montant_ht            Float    @default(0)
   tva_taux              Float    @default(19)
   montant_ttc           Float    @default(0)
   notes                 String?
-  created_by            Int
-
-  company               Company              @relation(fields: [company_id], references: [id])
-  chantier              Chantier             @relation(fields: [chantier_id], references: [id])
-  fournisseur           Fournisseur          @relation(fields: [fournisseur_id], references: [id])
+  created_at            DateTime @default(now())
+  
+  company               Company     @relation(fields: [company_id], references: [id])
+  fournisseur           Fournisseur @relation(fields: [fournisseur_id], references: [id])
+  chantier              Chantier?   @relation(fields: [chantier_id], references: [id])
+  
   lignes                LigneBC[]
   bons_livraison        BonLivraison[]
-  factures              FactureFournisseur[]
+  factures_fournisseur  FactureFournisseur[]
 }
 
 model LigneBC {
-  id                 Int      @id @default(autoincrement())
-  bon_commande_id    Int
-  article_id         Int
-  designation        String
-  unite              String
-  quantite_commandee Float
-  quantite_recue     Float    @default(0)
-  prix_unitaire_ht   Float
-  montant_ht         Float
-
-  bon_commande       BonCommande @relation(fields: [bon_commande_id], references: [id])
-  article            Article     @relation(fields: [article_id], references: [id])
-  lignes_bl          LigneBL[]
+  id                    Int     @id @default(autoincrement())
+  bc_id                 Int
+  designation           String
+  unite                 String
+  quantite_commandee    Float
+  quantite_receptionnee Float   @default(0)
+  prix_unitaire         Float
+  montant_total         Float
+  
+  bc                    BonCommande @relation(fields: [bc_id], references: [id])
+  lignes_bl             LigneBL[]
 }
 
 model BonLivraison {
-  id                 Int      @id @default(autoincrement())
-  bon_commande_id    Int
-  chantier_id        Int
-  numero_bl          String
-  date_reception     DateTime
-  statut             String
-  notes              String?
-  created_by         Int
-
-  bon_commande       BonCommande @relation(fields: [bon_commande_id], references: [id])
-  chantier           Chantier   @relation(fields: [chantier_id], references: [id])
-  lignes             LigneBL[]
+  id             Int      @id @default(autoincrement())
+  bc_id          Int
+  numero         String
+  date_reception DateTime @default(now())
+  statut         String   @default("RECU")
+  notes          String?
+  
+  bc             BonCommande @relation(fields: [bc_id], references: [id])
+  lignes         LigneBL[]
 }
 
 model LigneBL {
-  id                 Int      @id @default(autoincrement())
-  bon_livraison_id   Int
-  ligne_bc_id        Int
-  quantite_livree    Float
-  notes              String?
-
-  bon_livraison      BonLivraison @relation(fields: [bon_livraison_id], references: [id])
-  ligne_bc           LigneBC      @relation(fields: [ligne_bc_id], references: [id])
+  id               Int     @id @default(autoincrement())
+  bl_id            Int
+  ligne_bc_id      Int
+  quantite_livree  Float
+  notes            String?
+  
+  bl               BonLivraison @relation(fields: [bl_id], references: [id])
+  ligne_bc         LigneBC      @relation(fields: [ligne_bc_id], references: [id])
 }
 
 model FactureFournisseur {
-  id                 Int      @id @default(autoincrement())
-  company_id         Int
-  fournisseur_id     Int
-  bon_commande_id    Int?
-  numero_facture     String
-  date_facture       DateTime
-  date_echeance      DateTime?
-  montant_ht         Float
-  tva_taux           Float    @default(19)
-  montant_tva        Float
-  montant_ttc        Float
-  statut_paiement    String   // EN_ATTENTE, PARTIELLEMENT_PAYE, PAYE, LITIGE
-  notes              String?
-
-  company            Company          @relation(fields: [company_id], references: [id])
-  fournisseur        Fournisseur      @relation(fields: [fournisseur_id], references: [id])
-  bon_commande       BonCommande?     @relation(fields: [bon_commande_id], references: [id])
-  paiements          PaiementFournisseur[]
+  id           Int      @id @default(autoincrement())
+  bc_id        Int
+  numero       String
+  montant_ht   Float
+  tva_taux     Float    @default(19)
+  montant_ttc  Float
+  statut       String   @default("EN_ATTENTE") // EN_ATTENTE | PAYEE
+  date_facture DateTime @default(now())
+  
+  bc           BonCommande @relation(fields: [bc_id], references: [id])
 }
 
-model PaiementFournisseur {
-  id                      Int      @id @default(autoincrement())
-  facture_fournisseur_id  Int
-  date_paiement           DateTime
-  montant                 Float
-  mode_paiement           String   // ESPECES, VIREMENT, CHEQUE, TRAITE, COMPENSATION
-  reference               String?
-  notes                   String?
-
-  facture                 FactureFournisseur @relation(fields: [facture_fournisseur_id], references: [id])
+model Devis {
+  id            Int      @id @default(autoincrement())
+  company_id    Int
+  numero        String
+  client_id     Int?
+  chantier_id   Int?
+  statut        String   @default("BROUILLON") // BROUILLON | ENVOYE | ACCEPTE | REJETE
+  montant_ht    Float    @default(0)
+  tva_taux      Float    @default(19)
+  montant_ttc   Float    @default(0)
+  date_devis    DateTime @default(now())
+  date_validite DateTime?
+  notes         String?
+  created_at    DateTime @default(now())
+  
+  company       Company  @relation(fields: [company_id], references: [id])
+  client        Client?  @relation(fields: [client_id], references: [id])
+  chantier      Chantier? @relation(fields: [chantier_id], references: [id])
+  
+  lignes        LigneDevis[]
 }
 
-// STOCKS & MATÉRIAUX
-model CategorieArticle {
+model LigneDevis {
+  id            Int     @id @default(autoincrement())
+  devis_id      Int
+  designation   String
+  unite         String?
+  quantite      Float   @default(1)
+  prix_unitaire Float   @default(0)
+  montant       Float   @default(0)
+  
+  devis         Devis   @relation(fields: [devis_id], references: [id])
+}
+
+model Facture {
+  id            Int      @id @default(autoincrement())
+  company_id    Int
+  numero        String
+  client_id     Int?
+  chantier_id   Int?
+  statut        String   @default("BROUILLON") // BROUILLON | ENVOYEE | PAYEE | PARTIELLE | EN_RETARD
+  montant_ht    Float    @default(0)
+  tva_taux      Float    @default(19)
+  montant_ttc   Float    @default(0)
+  montant_paye  Float    @default(0)
+  solde_du      Float    @default(0)
+  date_facture  DateTime @default(now())
+  date_echeance DateTime?
+  notes         String?
+  created_at    DateTime @default(now())
+  
+  company       Company  @relation(fields: [company_id], references: [id])
+  client        Client?  @relation(fields: [client_id], references: [id])
+  chantier      Chantier? @relation(fields: [chantier_id], references: [id])
+  
+  lignes        LigneFacture[]
+  paiements     Paiement[]
+}
+
+model LigneFacture {
+  id            Int     @id @default(autoincrement())
+  facture_id    Int
+  designation   String
+  unite         String?
+  quantite      Float   @default(1)
+  prix_unitaire Float   @default(0)
+  montant       Float   @default(0)
+  
+  facture       Facture @relation(fields: [facture_id], references: [id])
+}
+
+model Paiement {
+  id            Int      @id @default(autoincrement())
+  facture_id    Int
+  montant       Float
+  date_paiement DateTime @default(now())
+  mode          String   // VIREMENT | CHEQUE | ESPECES | TRAITE
+  reference     String?
+  
+  facture       Facture  @relation(fields: [facture_id], references: [id])
+}
+
+model Depense {
+  id            Int      @id @default(autoincrement())
+  company_id    Int
+  chantier_id   Int?
+  designation   String
+  categorie     String   // Matériaux | Matériel | Main-d'oeuvre | Services publics | Autre
+  montant       Float
+  statut        String   @default("EN_ATTENTE") // EN_ATTENTE | APPROUVE | REJETE
+  date_depense  DateTime @default(now())
+  notes         String?
+  created_at    DateTime @default(now())
+  
+  company       Company  @relation(fields: [company_id], references: [id])
+  chantier      Chantier? @relation(fields: [chantier_id], references: [id])
+}
+
+model CompteTresorerie {
+  id            Int      @id @default(autoincrement())
+  company_id    Int
+  nom           String
+  type          String   // CAISSE | BANQUE | CCP
+  solde         Float    @default(0)
+  actif         Boolean  @default(true)
+  created_at    DateTime @default(now())
+  
+  company       Company  @relation(fields: [company_id], references: [id])
+  
+  transactions  Transaction[]
+  cheques       Cheque[]
+}
+
+model Transaction {
   id          Int      @id @default(autoincrement())
-  company_id  Int
-  nom         String
-  description String?
-  parent_id   Int?
-
-  company     Company   @relation(fields: [company_id], references: [id])
-  articles    Article[]
+  compte_id   Int
+  libelle     String
+  montant     Float    // positif = entrée, négatif = sortie
+  date        DateTime @default(now())
+  statut      String   @default("EN_ATTENTE") // EN_ATTENTE | VALIDE
+  reference   String?
+  
+  compte      CompteTresorerie @relation(fields: [compte_id], references: [id])
 }
 
-model Article {
-  id                   Int      @id @default(autoincrement())
-  company_id           Int
-  categorie_id         Int
-  code                 String
-  designation          String
-  unite                String   // KG, TONNE, ML, M2, M3, PIECE, UNITE, SAC, LITRE, FORFAIT
-  prix_unitaire_moyen  Float    @default(0)
-  stock_actuel         Float    @default(0)
-  stock_minimum        Float    @default(0)
-  stock_maximum        Float?
-  description          String?
-  actif                Boolean  @default(true)
-
-  company              Company           @relation(fields: [company_id], references: [id])
-  categorie            CategorieArticle  @relation(fields: [categorie_id], references: [id])
-  lignes_bc            LigneBC[]
-  mouvements_stock     MouvementStock[]
-  lignes_inventaire    LigneInventaire[]
+model Cheque {
+  id            Int      @id @default(autoincrement())
+  compte_id     Int
+  numero        String
+  beneficiaire  String
+  montant       Float
+  date_echeance DateTime
+  type          String   // A_RECEVOIR | A_PAYER
+  statut        String   @default("EN_ATTENTE") // EN_ATTENTE | ENCAISSE | REJETE
+  
+  compte        CompteTresorerie @relation(fields: [compte_id], references: [id])
 }
 
-model MouvementStock {
-  id                 Int      @id @default(autoincrement())
-  company_id         Int
-  article_id         Int
-  chantier_id        Int?
-  type_mouvement     String   // ENTREE_ACHAT, ENTREE_RETOUR, SORTIE_CHANTIER, SORTIE_PERTE, INVENTAIRE_POSITIF, INVENTAIRE_NEGATIF, TRANSFERT_ENTRANT, TRANSFERT_SORTANT
-  quantite           Float
-  prix_unitaire      Float
-  valeur_totale      Float
-  reference_document String?
-  date_mouvement     DateTime @default(now())
-  created_by         Int
-  notes              String?
-
-  company            Company    @relation(fields: [company_id], references: [id])
-  article            Article    @relation(fields: [article_id], references: [id])
-  chantier           Chantier?  @relation(fields: [chantier_id], references: [id])
-}
-
-model Inventaire {
-  id               Int      @id @default(autoincrement())
-  company_id       Int
-  date_inventaire  DateTime
-  statut           String
-  notes            String?
-  created_by       Int
-
-  company          Company            @relation(fields: [company_id], references: [id])
-  lignes           LigneInventaire[]
-}
-
-model LigneInventaire {
-  id               Int      @id @default(autoincrement())
-  inventaire_id    Int
-  article_id       Int
-  stock_theorique  Float
-  stock_physique   Float
-  ecart            Float    @default(0)
-  valeur_ecart     Float    @default(0)
-
-  inventaire       Inventaire @relation(fields: [inventaire_id], references: [id])
-  article          Article    @relation(fields: [article_id], references: [id])
-}
-
-// RESSOURCES HUMAINES
-model Employe {
-  id                   Int      @id @default(autoincrement())
-  company_id           Int
-  matricule            String
-  nom                  String
-  prenom               String
-  date_naissance       DateTime?
-  nin                  String?
-  cnas_numero          String?
-  qualification        String   // INGENIEUR, TECHNICIEN, CHEF_CHANTIER, OUVRIER_QUALIFIE, OUVRIER, MANOEUVRE, GARDIEN, ADMINISTRATIF
-  poste                String?
-  type_contrat         String   // CDI, CDD, SAISONNIER, JOURNALIER
-  date_embauche        DateTime
-  date_fin_contrat     DateTime?
-  salaire_base         Float
-  prime_chantier       Float    @default(0)
-  indemnite_transport  Float    @default(0)
-  telephone            String?
-  adresse              String?
-  rib                  String?
-  banque               String?
-  actif                Boolean  @default(true)
-
-  company              Company               @relation(fields: [company_id], references: [id])
-  affectations         AffectationChantier[]
-  pointages            Pointage[]
-  bulletins_paie       BulletinPaie[]
-  avances              AvanceSalaire[]
-  conges               Conge[]
-}
-
-model AffectationChantier {
-  id                 Int      @id @default(autoincrement())
-  employe_id         Int
-  chantier_id        Int
-  date_debut         DateTime
-  date_fin           DateTime?
-  poste_sur_chantier String?
-  notes              String?
-
-  employe            Employe    @relation(fields: [employe_id], references: [id])
-  chantier           Chantier   @relation(fields: [chantier_id], references: [id])
-}
-
-model Pointage {
-  id                 Int      @id @default(autoincrement())
-  company_id         Int
-  employe_id         Int
-  chantier_id        Int
-  date_pointage      DateTime
-  heure_entree       String?
-  heure_sortie       String?
-  heures_normales    Float    @default(8)
-  heures_sup_25      Float    @default(0)
-  heures_sup_50      Float    @default(0)
-  heures_sup_100     Float    @default(0)
-  statut_journee     String   // PRESENT, ABSENT, CONGE, MALADIE, FERIE, MISSION
-  notes              String?
-
-  company            Company    @relation(fields: [company_id], references: [id])
-  employe            Employe    @relation(fields: [employe_id], references: [id])
-  chantier           Chantier   @relation(fields: [chantier_id], references: [id])
+model PeriodePaie {
+  id           Int      @id @default(autoincrement())
+  company_id   Int
+  periode      String   // "Mars 2026"
+  mois         Int
+  annee        Int
+  total_brut   Float    @default(0)
+  total_cnas   Float    @default(0)
+  total_irg    Float    @default(0)
+  total_net    Float    @default(0)
+  statut       String   @default("BROUILLON") // BROUILLON | VALIDEE
+  created_at   DateTime @default(now())
+  
+  company      Company  @relation(fields: [company_id], references: [id])
+  bulletins    BulletinPaie[]
 }
 
 model BulletinPaie {
-  id                   Int      @id @default(autoincrement())
-  company_id           Int
-  employe_id           Int
-  mois                 Int
-  annee                Int
-  jours_travailles     Float
-  heures_normales      Float
-  heures_sup_25        Float
-  heures_sup_50        Float
-  salaire_brut         Float
-  prime_chantier       Float    @default(0)
-  indemnite_transport  Float    @default(0)
-  autres_primes        Float    @default(0)
-  retenues_cnas        Float    @default(0)
-  retenues_irg         Float    @default(0)
-  autres_retenues      Float    @default(0)
-  avances_deduites     Float    @default(0)
-  salaire_net          Float
-  statut               String   // BROUILLON, VALIDE, PAYE
-  date_paiement        DateTime?
-  notes                String?
-
-  company              Company  @relation(fields: [company_id], references: [id])
-  employe              Employe  @relation(fields: [employe_id], references: [id])
+  id              Int     @id @default(autoincrement())
+  periode_id      Int
+  employe_nom     String
+  salaire_base    Float
+  heures          Float   @default(0)
+  primes          Float   @default(0)
+  brut            Float
+  cnas           Float   // 35% du brut
+  irg            Float   // barème DZ
+  net            Float
+  
+  periode         PeriodePaie @relation(fields: [periode_id], references: [id])
 }
 
-model AvanceSalaire {
-  id                 Int      @id @default(autoincrement())
-  employe_id         Int
-  date_avance        DateTime
-  montant            Float
-  motif              String?
-  remboursement_prevu DateTime?
-  statut             String   // EN_ATTENTE, DEDUITE, ANNULEE
-
-  employe            Employe  @relation(fields: [employe_id], references: [id])
+model CautionBancaire {
+  id            Int      @id @default(autoincrement())
+  company_id    Int
+  numero        String
+  beneficiaire  String
+  montant       Float
+  date_emission DateTime
+  date_echeance DateTime
+  statut        String   @default("ACTIVE") // ACTIVE | A_RENOUVELER | LIBEREE | EXPIREE
+  banque        String?
+  type_caution  String?  // Bonne exécution | Restitution avance | Retenue garantie
+  created_at    DateTime @default(now())
+  
+  company       Company  @relation(fields: [company_id], references: [id])
 }
 
-model Conge {
-  id                 Int      @id @default(autoincrement())
-  employe_id         Int
-  type_conge         String   // ANNUEL, MALADIE, MATERNITE, SANS_SOLDE, AUTRE
-  date_debut         DateTime
-  date_fin           DateTime
-  nombre_jours       Float
-  statut             String   // DEMANDE, ACCEPTE, REFUSE
-  notes              String?
-
-  employe            Employe  @relation(fields: [employe_id], references: [id])
+model CalculMetier {
+  id            Int      @id @default(autoincrement())
+  company_id    Int
+  metier        String   // PLOMBERIE | REVETEMENT | PEINTURE | ELECTRICITE | MENUISERIE | GROS_OEUVRE | CLIMATISATION | VRD | FINITIONS
+  nom           String
+  cout_total    Float    @default(0)
+  duree_heures  Float    @default(0)
+  created_at    DateTime @default(now())
+  
+  company       Company  @relation(fields: [company_id], references: [id])
+  lignes        LigneCalcul[]
 }
 
-// IMMOBILISATIONS & MATÉRIEL
-model Immobilisation {
-  id                         Int      @id @default(autoincrement())
-  company_id                 Int
-  code                       String   @unique
-  designation                String
-  categorie                  String   // ENGIN_TP, VEHICULE, OUTILLAGE, EQUIPEMENT_BUREAU, MATERIEL_INFORMATIQUE
-  marque                     String?
-  modele                     String?
-  numero_serie               String?
-  date_acquisition           DateTime
-  valeur_acquisition         Float
-  duree_amortissement_ans    Float
-  valeur_residuelle          Float    @default(0)
-  statut                     String   // EN_SERVICE, EN_MAINTENANCE, HORS_SERVICE, CEDE
-  notes                      String?
-
-  company                    Company               @relation(fields: [company_id], references: [id])
-  affectations               AffectationMateriel[]
-  maintenances               Maintenance[]
+model LigneCalcul {
+  id            Int     @id @default(autoincrement())
+  calcul_id     Int
+  code          String
+  designation   String
+  unite         String
+  quantite      Float
+  prix_unitaire Float
+  montant       Float
+  
+  calcul        CalculMetier @relation(fields: [calcul_id], references: [id])
 }
 
-model AffectationMateriel {
-  id                      Int      @id @default(autoincrement())
-  immobilisation_id       Int
-  chantier_id             Int
-  date_affectation        DateTime
-  date_retour             DateTime?
-  cout_location_journalier Float    @default(0)
-  heures_utilisation      Float    @default(0)
-  notes                   String?
-
-  immobilisation          Immobilisation @relation(fields: [immobilisation_id], references: [id])
-  chantier                Chantier       @relation(fields: [chantier_id], references: [id])
+model PrixMarche {
+  id            Int      @id @default(autoincrement())
+  company_id    Int
+  code_article  String
+  designation   String
+  unite         String
+  prix          Float
+  metier        String   // PLOMBERIE | REVETEMENT | etc.
+  wilaya        String   @default("National")
+  source        String?  // "Prix référence Algérie 2025"
+  date_prix     DateTime @default(now())
+  
+  company       Company  @relation(fields: [company_id], references: [id])
 }
 
-model Maintenance {
-  id                      Int      @id @default(autoincrement())
-  immobilisation_id       Int
-  type_maintenance        String   // PREVENTIVE, CORRECTIVE, REVISION
-  date_maintenance        DateTime
-  cout                    Float
-  prestataire             String?
-  prochain_entretien_km   Float?
-  prochain_entretien_date DateTime?
-  description             String?
-
-  immobilisation          Immobilisation @relation(fields: [immobilisation_id], references: [id])
-}
-
-// GESTION COMMERCIALE CLIENTS
-model Lot {
-  id                Int      @id @default(autoincrement())
-  project_id        Int
-  numero_lot        String
-  type_bien         String   // APPARTEMENT, VILLA, LOCAL, TERRAIN
-  superficie_terrain Float?
-  superficie_batie   Float?
-  etage             String?
-  prix_vente_ht     Float
-  tva_taux          Float    @default(0)
-  prix_vente_ttc    Float
-  statut            String   // DISPONIBLE, RESERVE, VENDU, LITIGE
-
-  project           Project         @relation(fields: [project_id], references: [id])
-  contrats_vente    ContratVente[]
-}
-
-model ContratVente {
-  id                Int      @id @default(autoincrement())
-  company_id        Int
-  client_id         Int
-  lot_id            Int
-  numero_contrat    String
-  date_contrat      DateTime
-  prix_total_ttc    Float
-  montant_apport    Float    @default(0)
-  mode_financement  String   // COMPTANT, CREDOC, CREDIT_IMMOBILIER, ECHELONNE
-  notaire           String?
-  notes             String?
-  statut            String   // BROUILLON, SIGNE, ANNULE, SOLDE
-
-  company           Company            @relation(fields: [company_id], references: [id])
-  client            Client             @relation(fields: [client_id], references: [id])
-  lot               Lot                @relation(fields: [lot_id], references: [id])
-  echeances         EcheancePaiement[]
-}
-
-model EcheancePaiement {
-  id                Int      @id @default(autoincrement())
-  contrat_vente_id  Int
-  numero_tranche    Int
-  date_echeance     DateTime
-  montant_appel     Float
-  montant_encaisse  Float    @default(0)
-  statut            String   // EN_ATTENTE, PARTIELLEMENT_PAYEE, PAYEE, EN_RETARD
-  notes             String?
-
-  contrat_vente     ContratVente   @relation(fields: [contrat_vente_id], references: [id])
-  encaissements     Encaissement[]
-}
-
-model Encaissement {
-  id                 Int      @id @default(autoincrement())
-  echeance_id        Int
-  date_encaissement  DateTime
-  montant            Float
-  mode_paiement      String   // ESPECES, VIREMENT, CHEQUE
-  reference_paiement String?
-  notes              String?
-  created_by         Int
-
-  echeance           EcheancePaiement @relation(fields: [echeance_id], references: [id])
-}
-
-// CHARGES FIXES & DÉPENSES DIRECTES
-model DepenseDirecte {
-  id               Int      @id @default(autoincrement())
-  company_id       Int
-  chantier_id      Int
-  categorie_depense String  // LOCATION_MATERIEL, SOUS_TRAITANCE, HONORAIRES, ASSURANCE, TRANSPORT, CARBURANT, ELECTRICITE, COMMUNICATION, AUTRE
-  description      String
-  montant_ht       Float
-  tva_taux         Float    @default(19)
-  montant_ttc      Float
-  date_depense     DateTime
-  justificatif_url String?
-  statut_paiement  String   // NON_PAYE, PAYE
-  created_by       Int
-
-  company          Company   @relation(fields: [company_id], references: [id])
-  chantier         Chantier  @relation(fields: [chantier_id], references: [id])
-}
-
-model ChargeFixe {
-  id               Int      @id @default(autoincrement())
-  company_id       Int
-  designation      String
-  montant_mensuel  Float
-  date_debut       DateTime
-  date_fin         DateTime?
-  actif            Boolean  @default(true)
-
-  company          Company  @relation(fields: [company_id], references: [id])
-}
-
-// SOUS-TRAITANCE
-model SousTraitant {
-  id               Int      @id @default(autoincrement())
-  company_id       Int
-  raison_sociale   String
-  rc               String?
-  nif              String?
-  specialite       String?
-  telephone        String?
-  email            String?
-  actif            Boolean  @default(true)
-
-  company          Company                @relation(fields: [company_id], references: [id])
-  contrats         ContratSousTraitance[]
-}
-
-model ContratSousTraitance {
-  id               Int      @id @default(autoincrement())
-  company_id       Int
-  chantier_id      Int
-  sous_traitant_id Int
-  numero_contrat   String
-  objet            String
-  montant_ht       Float
-  tva_taux         Float    @default(19)
-  date_debut       DateTime
-  date_fin         DateTime?
-  statut           String   // BROUILLON, EN_COURS, TERMINE, ANNULE
-
-  company          Company            @relation(fields: [company_id], references: [id])
-  chantier         Chantier           @relation(fields: [chantier_id], references: [id])
-  sous_traitant    SousTraitant       @relation(fields: [sous_traitant_id], references: [id])
-  situations       SituationTravauxST[]
-}
-
-model SituationTravauxST {
-  id                       Int      @id @default(autoincrement())
-  contrat_st_id            Int
-  numero_situation         Int
-  date_situation           DateTime
-  montant_cumule_ht        Float
-  montant_periode_ht       Float
-  retenue_garantie_taux    Float    @default(5)
-  montant_paye             Float    @default(0)
-  statut                   String   // SOUMISE, VALIDEE, PAYEE
-
-  contrat                  ContratSousTraitance @relation(fields: [contrat_st_id], references: [id])
-}
-
-// BUDGET & SUIVI FINANCIER
-model BudgetChantier {
-  id               Int      @id @default(autoincrement())
-  chantier_id      Int
-  version          Int      @default(1)
-  date_budget      DateTime @default(now())
-  statut           String   // BROUILLON, VALIDE, REVISE
-  notes            String?
-  created_by       Int
-
-  chantier         Chantier      @relation(fields: [chantier_id], references: [id])
-  lignes           LigneBudget[]
-}
-
-model LigneBudget {
-  id               Int      @id @default(autoincrement())
-  budget_id        Int
-  categorie        String   // MATERIAUX, MAIN_OEUVRE, SOUS_TRAITANCE, MATERIEL, FRAIS_GENERAUX
-  sous_categorie   String?
-  description      String
-  montant_prevu    Float
-  montant_realise  Float    @default(0)
-  notes            String?
-
-  budget           BudgetChantier @relation(fields: [budget_id], references: [id])
-}
-
-// DOCUMENTS & PIÈCES JOINTES
-model Document {
-  id               Int      @id @default(autoincrement())
-  company_id       Int
-  entity_type      String   // PROJET, CHANTIER, EMPLOYE, FACTURE, etc.
-  entity_id        Int
-  nom_fichier      String
-  chemin_fichier   String
-  taille           Int
-  mime_type        String
-  description      String?
-  created_by       Int
-  created_at       DateTime @default(now())
-
-  company          Company  @relation(fields: [company_id], references: [id])
-}
-
-// AUDIT & LOGS
-model AuditLog {
-  id               Int      @id @default(autoincrement())
-  company_id       Int
-  user_id          Int
-  action           String   // CREATE, UPDATE, DELETE, LOGIN
-  entity_type      String
-  entity_id        Int?
-  old_values       String?  // JSON string
-  new_values       String?  // JSON string
-  ip_address       String?
-  user_agent       String?
-  created_at       DateTime @default(now())
-
-  company          Company  @relation(fields: [company_id], references: [id])
-  user             User     @relation(fields: [user_id], references: [id])
+model PreferenceNotification {
+  id                      Int     @id @default(autoincrement())
+  company_id              Int     @unique
+  depenses_en_attente     Boolean @default(true)
+  factures_en_retard      Boolean @default(true)
+  rappels_taches          Boolean @default(true)
+  seuil_avertissement     Int     @default(80)  // %
+  seuil_critique          Int     @default(100) // %
+  delai_rappel_jours      Int     @default(3)
+  
+  company                 Company @relation(fields: [company_id], references: [id])
 }
